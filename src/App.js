@@ -3,14 +3,10 @@ import * as React from 'react';
 import Navbar from "./Navbar";
 import { Route, Switch, BrowserRouter } from "react-router-dom";
 import Login from "./Login";
+import Tabs from "./Tabs";
+import Chat from "./Chat";
+
 // import "./styles.css";
-
-
-const Home = () => (
-  <div>
-    <h2>Home</h2>
-  </div>
-);
 
 export default function App() {
 
@@ -19,9 +15,10 @@ export default function App() {
         <div>
           <Navbar />
           <Switch>
-              <Route exact path='/' component={Home} />
+            <Route exact path='/' component={Tabs} />
+            <Route path='/login' component={Login} />
+            <Route path='/chat/:id' component={Chat} />
 
-              <Route path='/login' component={Login} />
           </Switch>
         </div>
       </BrowserRouter>

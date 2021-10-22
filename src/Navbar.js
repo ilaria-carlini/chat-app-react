@@ -1,75 +1,76 @@
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
-import Button from '@mui/material/Button';
 import * as React from 'react';
-import PropTypes from 'prop-types';
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
-import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
+import localStorage from 'local-storage';
+import LogoutIcon from '@mui/icons-material/Logout';
+import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
+import IconButton from '@mui/material/IconButton';
+import { useHistory } from "react-router-dom";
+import Typography from '@mui/material/Typography';
+import { useEffect } from 'react';
 
-function TabPanel(props) {
+export default function Navbar(props) {
   const { children, value, index, ...other } = props;
+  let history = useHistory();
 
-  return (
+  const [windowUrl, setWindowUrl] = React.useState(0);
+  let isInChat = true;
 
-    // <Box sx={{ width: '100%' }}>
-    //   <AppBar position="static">
-    //     <Toolbar>
-    //       <Button color="inherit">Logout</Button>
-    //     </Toolbar>
-        <div
-          role="tabpanel"
-          hidden={value !== index}
-          id={`simple-tabpanel-${index}`}
-          aria-labelledby={`simple-tab-${index}`}
-          {...other}
-        >
-          {value === index && (
-            <Box sx={{ p: 2 }}>
-              <Typography>{children}</Typography>
-            </Box>
-          )}
-        </div>
-    //   </AppBar>
-    // </Box>
-  );
-}
+  useEffect(() => {
+    getWindowUrl();
 
-TabPanel.propTypes = {
-  children: PropTypes.node,
-  index: PropTypes.number.isRequired,
-  value: PropTypes.number.isRequired,
-};
+    async function getWindowUrl() {
+      isInChat = false;
+      let str = window.location.href;
+      if (str.includes('/chat')) {
+        isInChat = true;
+      }
+      setWindowUrl(isInChat);
+    }
+  });
 
-function a11yProps(index) {
-  return {
-    id: `simple-tab-${index}`,
-    'aria-controls': `simple-tabpanel-${index}`,
+  const handleLogout = async (event) => {
+    event.preventDefault();
+    if (localStorage.get('user-logged-in') != null) {
+      localStorage.remove('user-logged-in');
+      history.push("/login");
+    }
   };
-}
 
-export default function BasicTabs() {
-  const [value, setValue] = React.useState(0);
-
-  const handleChange = (event, newValue) => {
-    setValue(newValue);
+  const handleGoBack = async (event) => {
+    event.preventDefault();
+    history.push("/");
   };
 
   return (
     <Box sx={{ width: '100%' }}>
-      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs value={value} onChange={handleChange} aria-label="basic tabs example" variant="fullWidth">
-          <Tab label="Contacts" {...a11yProps(0)} />
-          <Tab label="Profile" {...a11yProps(1)} />
-        </Tabs>
-      </Box>
-      <TabPanel value={value} index={0}>
-        Contacts
-      </TabPanel>
-      <TabPanel value={value} index={1}>
-        Profile
-      </TabPanel>
+      <AppBar position="static">
+        <Toolbar>
+          { isInChat && 
+              <IconButton
+              size="large"
+              onClick={handleGoBack}
+              color="inherit"
+            >
+              <ArrowBackIosIcon />
+            </IconButton>     
+          }
+          <Typography  component="div" sx={{ flexGrow: 1 }}>
+            Back
+          </Typography>
+
+          { localStorage.get('user-logged-in') != null && (
+            <IconButton
+              size="large"
+              onClick={handleLogout}
+              color="inherit"
+            >
+              <LogoutIcon />
+            </IconButton>
+          )}
+        </Toolbar>
+      </AppBar>
     </Box>
   );
 }

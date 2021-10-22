@@ -10,14 +10,16 @@ import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { useHistory } from "react-router-dom";
+import localStorage from 'local-storage';
 
 const theme = createTheme();
 
 export default function Login() {
 
-  const history = useHistory();
+  let history = useHistory();
 
-  const BASE_URL = 'http://0.0.0.0:8080';
+  // const BASE_URL = 'http://0.0.0.0:8080';
+  const BASE_URL = 'https://chat-server-challenge.herokuapp.com';
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -29,16 +31,42 @@ export default function Login() {
         username: data.get('email'),
         password: data.get('password')
       };
-      const res = await axios.post(`${BASE_URL}/login`, json, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }).then(res => {
-          console.log(res);
-          console.log(res.data);
 
-          if (res.status === 200) history.push("/");
-          else throw new Error(res.status);
+      // const fakeJson = {
+      //   username: 'tizio',
+      //   password: 'tizio.secret'
+      // }
+      
+
+      // const caioJson = {
+      //   username: 'caio',
+      //   password: 'caio.secret'
+      // }
+
+      fetch(`${BASE_URL}/login`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(json),
+        credentials: "include",
+      })
+      // const res = await axios.post(`${BASE_URL}/login`, fakeJson, {
+      //   withCredentials: true,
+      //   headers: {
+      //     'Content-Type': 'application/json'
+      //   }
+      // })
+      .then(res => {
+        return res.json()
+        .then(data => {
+          res.data = data;
+          return res;
+        })
+      })
+      .then(res => {
+        if (res.status === 200) {
+          history.push("/");
+          localStorage.set('user-logged-in', res.data);
+        } else throw new Error(res.status);
       });
     }
   };
