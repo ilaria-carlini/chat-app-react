@@ -1,5 +1,4 @@
 import * as React from 'react';
-import axios from 'axios';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -11,50 +10,32 @@ import Container from '@mui/material/Container';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { useHistory } from "react-router-dom";
 import localStorage from 'local-storage';
+import CircularProgress from '@mui/material/CircularProgress';
+import { useState } from 'react';
 
 const theme = createTheme();
-
+const ENDPOINT = 'https://chat-server-challenge.herokuapp.com';
 export default function Login() {
-
   let history = useHistory();
-
-  // const BASE_URL = 'http://0.0.0.0:8080';
-  const BASE_URL = 'https://chat-server-challenge.herokuapp.com';
+  const [login, setLogin] = useState(false);
 
   const handleSubmit = async (event) => {
-    event.preventDefault();
+    setLogin(true);
+    event.preventDefault();    
     const data = new FormData(event.currentTarget);
 
-    if (data.get('email') != "" && data.get('password') != "") {
-
+    if (data.get('email') !== "" && data.get('password') !== "") {
       const json = {
         username: data.get('email'),
         password: data.get('password')
       };
 
-      // const fakeJson = {
-      //   username: 'tizio',
-      //   password: 'tizio.secret'
-      // }
-      
-
-      // const caioJson = {
-      //   username: 'caio',
-      //   password: 'caio.secret'
-      // }
-
-      fetch(`${BASE_URL}/login`, {
+      fetch(`${ENDPOINT}/login`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(json),
         credentials: "include",
       })
-      // const res = await axios.post(`${BASE_URL}/login`, fakeJson, {
-      //   withCredentials: true,
-      //   headers: {
-      //     'Content-Type': 'application/json'
-      //   }
-      // })
       .then(res => {
         return res.json()
         .then(data => {
@@ -64,8 +45,9 @@ export default function Login() {
       })
       .then(res => {
         if (res.status === 200) {
+          localStorage.set('AUTH', res.data.id);
+          setLogin(false);
           history.push("/");
-          localStorage.set('user-logged-in', res.data);
         } else throw new Error(res.status);
       });
     }
@@ -118,6 +100,12 @@ export default function Login() {
             >
               Sign In
             </Button>
+            { login && (
+              <div style={{position: "absolute", left: '50%', top: '50%',
+              transform: 'translate(-50%, -50%)'}}>
+              <CircularProgress />
+              </div>
+            )} 
           </Box>
         </Box>
       </Container>

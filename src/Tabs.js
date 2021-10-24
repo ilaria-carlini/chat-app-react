@@ -20,6 +20,10 @@ import MessageIcon from '@mui/icons-material/Message';
 import { useHistory } from "react-router-dom";
 import localStorage from 'local-storage';
 import { useState, useEffect } from 'react';
+import io from 'socket.io-client';
+import LogoutIcon from '@mui/icons-material/Logout';
+
+const ENDPOINT = "https://chat-server-challenge.herokuapp.com";
 
 const Search = styled('div')(({ theme }) => ({
   position: 'relative',
@@ -96,26 +100,21 @@ function a11yProps(index) {
 
 export default function BasicTabs() {
 
-  // const BASE_URL = 'https://0.0.0.0:8080';
-  const BASE_URL = 'https://chat-server-challenge.herokuapp.com';
-
   let history = useHistory();
-
-  if (localStorage.get('user-logged-in') == null) {
+  if (localStorage.get('AUTH') == null) {
       history.push("/login");
-  }
+  } 
 
-  const [value, setValue] = React.useState(0);
+  const [value, setValue] = useState(0);
   const [contacts, setContacts] = useState(null);
   const [profile, setProfile] = useState(null);
-  const [search, setSearch] = useState('');
 
   useEffect(() => {
-    getContacts();
+    getContacts('');
     getProfile();
 
     async function getProfile() {
-      const response = await fetch(`${BASE_URL}/profile`, {
+      const response = await fetch(`${ENDPOINT}/profile`, {
         method: "GET",
         headers: { "content-type": "application/json" },
         credentials: "include",
@@ -123,19 +122,21 @@ export default function BasicTabs() {
       const data = await response.json();
       setProfile(data) ;
     }
+    const socket = io(ENDPOINT);
+    socket.on("chat message", () => {
+      getContacts()
+    });
   }, []);
 
 
-  async function getContacts() {
-    const response = await fetch(`${BASE_URL}/contacts?q=${search}`, {
+  async function getContacts(searchedValue) {
+    const response = await fetch(`${ENDPOINT}/contacts?q=${searchedValue}`, {
       method: "GET",
       headers: { "content-type": "application/json" },
       credentials: "include",
     });      
     const data = await response.json();
     setContacts(data);
-
-    setTimeout(() => getContacts(), 5000);
   }
 
   const handleChange = (event, newValue) => {
@@ -146,8 +147,25 @@ export default function BasicTabs() {
     history.push(`/chat/${contact.id}`);
   };
 
+  const handleLogout = async (event) => {
+    event.preventDefault();
+    if (localStorage.get('AUTH') != null) {
+      localStorage.remove('AUTH');
+      history.push("/login");
+    }
+  };
+
   return (
     <Box sx={{ width: '100%' }}>
+      <div style={{position: "absolute", right: "0", top: "4px", color:"white"}}>
+        <IconButton
+          size="large"
+          onClick={handleLogout}
+          color="inherit"
+        >
+          <LogoutIcon />
+        </IconButton>
+      </div>  
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
         <Tabs value={value} onChange={handleChange} aria-label="basic tabs example" variant="fullWidth">
           <Tab label="Contacts" {...a11yProps(0)} />
@@ -156,7 +174,7 @@ export default function BasicTabs() {
       </Box>
       <TabPanel value={value} index={0}>
 
-      <Search onChange={(e) => {setSearch(e.target.value) && getContacts()}} value={search}>
+      <Search onChange={(e) => {getContacts(e.target.value)}}>
           <SearchIconWrapper>
             <SearchIcon />
           </SearchIconWrapper>
@@ -204,7 +222,7 @@ export default function BasicTabs() {
               sx={{ width: 100, height: 100 }} 
               style={{margin: '10px auto 30px auto'}} 
             />
-            <Divider />
+            <Typography align="center" variant="h5" >{profile.name + ' ' + profile.surname}</Typography>
             <ListItem key={profile.username}>
               <ListItemText
                 primary={profile.username}
